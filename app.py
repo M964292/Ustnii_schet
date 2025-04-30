@@ -11,16 +11,33 @@ import os
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-# Telegram setup
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 TELEGRAM_CHAT_ID = "Mufassa_n1"  # Ваш Telegram username или chat_id
 
-def send_to_telegram(name, number, time_taken, errors):
+def collatz_steps(n):
+    steps = 0
+    while n != 1:
+        if n % 2 == 0:
+            n //= 2
+        else:
+            n = 3 * n + 1
+        steps += 1
+    return steps
+
+def get_number_with_steps(min_steps=8, max_steps=14, max_attempts=10000):
+    for _ in range(max_attempts):
+        candidate = random.randint(2, 1000)
+        steps = collatz_steps(candidate)
+        if min_steps <= steps <= max_steps:
+            return candidate
+    return 27  # fallback
+
+def send_to_telegram(name, surname, number, time_taken, errors):
     try:
         message = f"""
 🏆 Результаты турнира по устному счету:
 
-👤 Участник: {name}
+👤 Участник: {name} {surname}
 🔢 Число: {number}
 ⏱ Время: {time_taken} сек
 ❌ Ошибок: {errors}
@@ -45,14 +62,14 @@ def index():
 
 @app.route('/start', methods=['POST'])
 def start():
-    name = request.form.get('name')
-    if not name:
-        return jsonify({'error': 'Введите имя'}), 400
+    name = request.form.get('name', '').strip()
+    surname = request.form.get('surname', '').strip()
+    if not name or not surname:
+        return jsonify({'error': 'Введите имя и фамилию'}), 400
     
-    # Генерируем случайное число от 1 до 1000
-    number = random.randint(1, 1000)
-    
+    number = get_number_with_steps(8, 14)
     session['name'] = name
+    session['surname'] = surname
     session['number'] = number
     session['start_time'] = time.time()
     session['errors'] = 0
@@ -64,15 +81,16 @@ def start():
 
 @app.route('/submit', methods=['POST'])
 def submit():
-    if 'name' not in session:
+    if 'name' not in session or 'surname' not in session:
         return jsonify({'error': 'Не авторизован'}), 401
     
     name = session['name']
+    surname = session['surname']
     number = session['number']
     time_taken = round(time.time() - session['start_time'], 2)
     errors = session['errors']
     
-    success = send_to_telegram(name, number, time_taken, errors)
+    success = send_to_telegram(name, surname, number, time_taken, errors)
     
     if success:
         session.clear()
@@ -82,7 +100,7 @@ def submit():
 
 @app.route('/record_error', methods=['POST'])
 def record_error():
-    if 'name' not in session:
+    if 'name' not in session or 'surname' not in session:
         return jsonify({'error': 'Не авторизован'}), 401
     
     session['errors'] = session.get('errors', 0) + 1
