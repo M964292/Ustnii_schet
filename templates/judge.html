@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Турнир по устному счету — Судья</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-center mt-5 mb-4">Панель судьи</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Имя</th>
+                    <th>Число</th>
+                    <th>Шаги</th>
+                    <th>Ошибки</th>
+                    <th>Время (сек)</th>
+                    <th>Статус</th>
+                </tr>
+            </thead>
+            <tbody id="resultsTable"></tbody>
+        </table>
+    </div>
+    <script>
+        const socket = io();
+        socket.emit('judge_join');
+        socket.on('update_table', function(data) {
+            let html = '';
+            data.forEach(row => {
+                html += `<tr>
+                    <td>${row.name}</td>
+                    <td>${row.number}</td>
+                    <td>${row.steps}</td>
+                    <td>${row.errors}</td>
+                    <td>${row.time ? row.time.toFixed(2) : ''}</td>
+                    <td>${row.finished ? 'Завершено' : 'В процессе'}</td>
+                </tr>`;
+            });
+            document.getElementById('resultsTable').innerHTML = html;
+        });
+    </script>
+</body>
+</html>

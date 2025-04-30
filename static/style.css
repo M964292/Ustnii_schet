@@ -1,0 +1,13 @@
+body {
+    background-color: #EAF4FB;
+    font-family: Arial, sans-serif;
+}
+.btn-mir {
+    background-color: #4A90E2 !important;
+    color: #fff !important;
+    border: none !important;
+}
+.btn-mir:hover, .btn-mir:focus {
+    background-color: #357ab8 !important;
+    color: #fff !important;
+}

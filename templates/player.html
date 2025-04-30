@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Турнир по устному счету — Участник</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2 class="text-center mt-5 mb-4">Турнир по устному счету</h2>
+        <div id="joinBlock">
+            <input type="text" id="playerName" class="form-control mb-2" placeholder="Ваше имя">
+            <button class="btn btn-mir w-100" onclick="joinPlayer()">Начать</button>
+            <div id="joinError" class="text-danger mt-2"></div>
+        </div>
+        <div id="gameBlock" style="display:none;">
+            <div class="mb-3">Вам выдано число: <b id="startNumber"></b></div>
+            <div class="mb-3">
+                <span>Текущее число: <b id="currentNumber"></b></span>
+            </div>
+            <div class="mb-3">
+                <form id="stepForm" onsubmit="event.preventDefault(); submitStep();">
+                    <input type="number" id="answer" class="form-control mb-2" placeholder="Ваш следующий шаг" autocomplete="off">
+                    <button type="submit" class="btn btn-mir w-100">Проверить</button>
+                </form>
+            </div>
+            <div id="errorBlock" class="alert alert-danger mt-2 d-none"></div>
+            <div class="mb-2">
+                <span id="errorCounter" class="text-danger fw-bold"></span>
+            </div>
+            <div>
+                <span id="timer" class="badge bg-info fs-5">00:00</span>
+            </div>
+        </div>
+    </div>
+    <script>
+        const socket = io();
+        let currentNumber = null;
+        let errorCount = 0;
+        let timerInterval = null;
+        let startTime = null;
+
+        function joinPlayer() {
+            const name = document.getElementById('playerName').value.trim();
+            if (!name) {
+                document.getElementById('joinError').textContent = "Введите имя!";
+                return;
+            }
+            socket.emit('join_player', {name});
+        }
+        socket.on('join_error', data => {
+            document.getElementById('joinError').textContent = data.error;
+        });
+        socket.on('number_assigned', data => {
+            document.getElementById('joinBlock').style.display = 'none';
+            document.getElementById('gameBlock').style.display = '';
+            document.getElementById('startNumber').textContent = data.number;
+            document.getElementById('currentNumber').textContent = data.number;
+            currentNumber = data.number;
+            errorCount = 0;
+            updateErrorCounter();
+            showError('', true);
+            startTimer();
+            socket.emit('start_timer');
+        });
+
+        function submitStep() {
+            const answer = parseInt(document.getElementById('answer').value);
+            if (isNaN(answer)) {
+                showError('Введите число');
+                return;
+            }
+            socket.emit('submit_step', {answer});
+        }
+
+        socket.on('step_result', data => {
+            if (data.correct) {
+                currentNumber = document.getElementById('answer').value;
+                document.getElementById('currentNumber').textContent = currentNumber;
+                showError('', true);
+                document.getElementById('answer').value = '';
+                if (data.finished) {
+                    stopTimer();
+                    alert('Поздравляем! Вы завершили задачу!');
+                }
+            } else {
+                errorCount++;
+                showError(data.error_msg);
+                updateErrorCounter();
+            }
+        });
+
+        function showError(message, hide=false) {
+            const errorBlock = document.getElementById('errorBlock');
+            if (hide || !message) {
+                errorBlock.classList.add('d-none');
+                errorBlock.textContent = '';
+            } else {
+                errorBlock.classList.remove('d-none');
+                errorBlock.textContent = message;
+            }
+        }
+
+        function updateErrorCounter() {
+            const errorCounter = document.getElementById('errorCounter');
+            if (errorCount > 0) {
+                errorCounter.textContent = `Ошибок: ${errorCount}`;
+            } else {
+                errorCounter.textContent = '';
+            }
+        }
+
+        function startTimer() {
+            startTime = Date.now();
+            updateTimer();
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+        }
+
+        function updateTimer() {
