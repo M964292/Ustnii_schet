@@ -10,7 +10,6 @@
             --primary-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
             --secondary-gradient: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
         }
-        
         body {
             background: var(--primary-gradient);
             min-height: 100vh;
@@ -18,13 +17,11 @@
             align-items: center;
             padding: 20px 0;
         }
-        
         .container {
             max-width: 600px;
             width: 100%;
             padding: 0 15px;
         }
-        
         .card {
             border: none;
             border-radius: 20px;
@@ -32,23 +29,18 @@
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
         }
-        
         .card-body {
             padding: 2rem;
         }
-        
         .login-form, .game-interface {
             transition: all 0.3s ease;
         }
-        
         .login-form {
             display: block;
         }
-        
         .game-interface {
             display: none;
         }
-        
         .timer {
             font-size: 2rem;
             font-weight: bold;
@@ -57,7 +49,6 @@
             -webkit-text-fill-color: transparent;
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
         }
-        
         .error-count {
             font-size: 1.2rem;
             color: #6c757d;
@@ -65,45 +56,37 @@
             padding: 0.5rem 1rem;
             border-radius: 10px;
         }
-        
         .btn {
             padding: 0.8rem 1.5rem;
             border-radius: 10px;
             font-weight: 600;
             transition: all 0.3s ease;
         }
-        
         .btn-primary {
             background: var(--primary-gradient);
             border: none;
         }
-        
         .btn-success {
             background: var(--secondary-gradient);
             border: none;
         }
-        
         .btn-danger {
             background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
             border: none;
         }
-        
         .btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
         }
-        
         .form-control {
             border-radius: 10px;
             padding: 0.8rem 1rem;
             border: 2px solid rgba(0, 0, 0, 0.1);
         }
-        
         .form-control:focus {
             border-color: #2a5298;
             box-shadow: 0 0 0 0.2rem rgba(42, 82, 152, 0.25);
         }
-        
         .current-number {
             font-size: 3rem;
             font-weight: bold;
@@ -114,7 +97,6 @@
             background: rgba(30, 60, 114, 0.1);
             border-radius: 15px;
         }
-        
         .message {
             display: none;
             padding: 1rem;
@@ -122,34 +104,27 @@
             border-radius: 10px;
             text-align: center;
         }
-        
         .message.error {
             background: rgba(255, 75, 43, 0.1);
             color: #ff4b2b;
         }
-        
         .message.success {
             background: rgba(33, 147, 176, 0.1);
             color: #2193b0;
         }
-        
         @media (max-width: 576px) {
             .card-body {
                 padding: 1.5rem;
             }
-            
             .timer {
                 font-size: 1.5rem;
             }
-            
             .error-count {
                 font-size: 1rem;
             }
-            
             .current-number {
                 font-size: 2rem;
             }
-            
             .btn {
                 padding: 0.6rem 1.2rem;
             }
@@ -165,12 +140,14 @@
                     <h2 class="text-center mb-4">Вход в систему</h2>
                     <form id="loginFormElement">
                         <div class="mb-3">
-                            <label for="userId" class="form-label">Ваш номер (user1-user50)</label>
-                            <input type="text" class="form-control" id="userId" required 
-                                   pattern="user[1-9]|user[1-4][0-9]|user50" 
-                                   placeholder="Например: user1">
+                            <label for="name" class="form-label">Имя</label>
+                            <input type="text" class="form-control" id="name" required placeholder="Например: Иван">
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">Войти</button>
+                        <div class="mb-3">
+                            <label for="surname" class="form-label">Фамилия</label>
+                            <input type="text" class="form-control" id="surname" required placeholder="Например: Иванов">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Начать</button>
                     </form>
                 </div>
 
@@ -187,7 +164,7 @@
                     </div>
                     <div class="mb-4">
                         <h4>Введите следующий шаг:</h4>
-                        <input type="number" class="form-control form-control-lg text-center" id="nextStep" required>
+                        <input type="number" class="form-control form-control-lg text-center" id="nextStep" required autofocus>
                     </div>
                     <div id="message" class="message"></div>
                     <button class="btn btn-success w-100 mb-2" id="checkStep">Проверить шаг</button>
@@ -228,19 +205,17 @@
 
         document.getElementById('loginFormElement').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const userId = document.getElementById('userId').value;
-            
+            const name = document.getElementById('name').value;
+            const surname = document.getElementById('surname').value;
             try {
-                const response = await fetch('/login', {
+                const response = await fetch('/start', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                     },
-                    body: `user_id=${userId}`
+                    body: `name=${encodeURIComponent(name)}&surname=${encodeURIComponent(surname)}`
                 });
-                
                 const data = await response.json();
-                
                 if (data.success) {
                     document.getElementById('loginForm').style.display = 'none';
                     document.getElementById('gameInterface').style.display = 'block';
@@ -248,6 +223,7 @@
                     document.getElementById('currentNumber').textContent = currentNumber;
                     startTime = new Date();
                     timerInterval = setInterval(updateTimer, 1000);
+                    document.getElementById('nextStep').focus();
                 } else {
                     showMessage(data.error || 'Ошибка входа', 'error');
                 }
@@ -256,15 +232,14 @@
             }
         });
 
-        document.getElementById('checkStep').addEventListener('click', () => {
+        function checkStep() {
             const userAnswer = parseInt(document.getElementById('nextStep').value);
             const correctAnswer = getNextNumber(currentNumber);
-            
             if (userAnswer === correctAnswer) {
                 currentNumber = correctAnswer;
                 document.getElementById('currentNumber').textContent = currentNumber;
                 document.getElementById('nextStep').value = '';
-                
+                document.getElementById('nextStep').focus();
                 if (currentNumber === 1) {
                     finishGame();
                 }
@@ -273,32 +248,38 @@
                 document.getElementById('errorCount').textContent = errors;
                 fetch('/record_error', { method: 'POST' });
                 showMessage('Неверный ответ!', 'error');
+                document.getElementById('nextStep').value = '';
+                document.getElementById('nextStep').focus();
+            }
+        }
+
+        document.getElementById('checkStep').addEventListener('click', checkStep);
+        document.getElementById('nextStep').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                checkStep();
             }
         });
 
         async function finishGame() {
             clearInterval(timerInterval);
-            
             try {
                 const response = await fetch('/submit', {
                     method: 'POST'
                 });
-                
                 const data = await response.json();
-                
                 if (data.success) {
-                    showMessage('Результаты сохранены!', 'success');
+                    showMessage('Результаты отправлены!', 'success');
                     setTimeout(() => {
                         window.location.reload();
                     }, 2000);
                 } else {
-                    showMessage('Ошибка при сохранении результатов', 'error');
+                    showMessage('Ошибка при отправке результатов', 'error');
                 }
             } catch (error) {
                 showMessage('Ошибка при завершении игры', 'error');
             }
         }
-
         document.getElementById('finishGame').addEventListener('click', finishGame);
     </script>
 </body>
